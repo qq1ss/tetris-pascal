@@ -3,12 +3,10 @@ uses crt, common_types, tetramino, unit_field, dynamicinput, block, gamestat;
 
 var
     Offset: TOffset;
-    Figure: TFigure;
+    Figure, NextFigure: TFigure;
     Field: TField;
     Stat: TStat;
-
     code: integer;
-    SaveTextAttr: integer;
     Counts: integer;
 
 begin
@@ -18,18 +16,20 @@ begin
         halt(1)
     end;
     randomize;
-    SaveTextAttr := TextAttr;
     clrscr;
 
     InitFigure(Figure);
+    InitFigure(NextFigure);
     InitField(Field, Offset);
 
     ShowBorders(Offset);
     ShowField(Field, Offset);
-    ShowFigure(Figure, Offset);
     InitStat(Stat, Offset);
     ShowStat(Stat);
     ShowSpeed(Stat);
+    ShowFigure(Figure, Offset);
+    ShowGhostFigure(Field, Figure, Offset);
+    ShowNextFigure(Stat, NextFigure);
 
     Counts := 0;
 
@@ -44,8 +44,10 @@ begin
                     if CanRotateLeft(Field, Figure) then
                     begin
                         HideFigure(Figure, Offset);
+                        HideGhostFigure(Field, Figure, Offset);
                         RotateFigureLeft(Figure);
-                        ShowFigure(Figure, Offset)
+                        ShowFigure(Figure, Offset);
+                        ShowGhostFigure(Field, Figure, Offset)
                     end
                 end;
                 KeyE:
@@ -53,8 +55,10 @@ begin
                     if CanRotateRight(Field, Figure) then
                     begin
                         HideFigure(Figure, Offset);
+                        HideGhostFigure(Field, Figure, Offset);
                         RotateFigureRight(Figure);
-                        ShowFigure(Figure, Offset)
+                        ShowFigure(Figure, Offset);
+                        ShowGhostFigure(Field, Figure, Offset)
                     end
                 end;
                 KeyLeft:
@@ -62,8 +66,10 @@ begin
                     if LeftPosIsFree(Field, Figure) then
                     begin
                         HideFigure(Figure, Offset);
+                        HideGhostFigure(Field, Figure, Offset);
                         MoveLeftFigure(Figure);
-                        ShowFigure(Figure, Offset)
+                        ShowFigure(Figure, Offset);
+                        ShowGhostFigure(Field, Figure, Offset)
                     end
                 end;
                 KeyRight:
@@ -71,14 +77,18 @@ begin
                     if RightPosIsFree(Field, Figure) then
                     begin
                         HideFigure(Figure, Offset);
+                        HideGhostFigure(Field, Figure, Offset);
                         MoveRightFigure(Figure);
-                        ShowFigure(Figure, Offset)
+                        ShowFigure(Figure, Offset);
+                        ShowGhostFigure(Field, Figure, Offset)
                     end
                 end;
                 KeySpace:
                     GamePause();
                 KeyDown:
-                    ForceDrop(Field, Figure, Offset, SaveTextAttr, Stat);
+                    ForceDrop(
+                        Field, Figure, NextFigure, Offset, Stat
+                    );
                 KeyEscape:
                     break;
             end
@@ -95,18 +105,23 @@ begin
             begin
                 StopFigure(Field, Figure);
                 HideField(Field, Offset);
+                HideGhostFigure(Field, Figure, Offset);
                 CheckAndDelLines(Field, Stat);
                 ShowField(Field, Offset);
-                InitFigure(Figure);
+                HideNextFigure(Stat, NextFigure);
+                Figure := NextFigure;
+                InitFigure(NextFigure);
+                ShowNextFigure(Stat, NextFigure);
                 if InExistsBlocks(Field, Figure) then
                 begin
-                    GameOver(Stat, SaveTextAttr);
+                    GameOver(Stat);
                     break
                 end
             end;
+            ShowGhostFigure(Field, Figure, Offset);
             ShowFigure(Figure, Offset)
         end
     end;
-    TextAttr := SaveTextAttr;
+    TextAttr := StandartTextAttr;
     clrscr
 end.

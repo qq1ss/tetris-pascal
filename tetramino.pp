@@ -8,6 +8,9 @@ procedure InitFigure(var fig: TFigure);
 procedure RotateFigureLeft(var fig: TFigure);
 procedure RotateFigureRight(var fig: TFigure);
 
+procedure ChangeFigureColor(var fig: TFigure; color: byte);
+function FindFigureColor(var fig: TFigure): byte;
+
 procedure ShowFigure(var fig: TFigure; var offset: TOffset);
 procedure HideFigure(var fig: TFigure; var offset: TOffset);
 
@@ -25,8 +28,15 @@ function RightPosIsFree(var field: TField; var fig: TFigure): boolean;
 
 procedure StopFigure(var field: TField; var fig: TFigure);
 procedure ForceDrop(
-    var field: TField; var fig: TFigure; var offset: TOffset;
-    SaveTextAttr: integer; var Stat: TStat
+    var field: TField; var fig, next_fig: TFigure; var offset: TOffset;
+    var stat: TStat
+);
+
+procedure ShowGhostFigure(
+    var field: TField; var fig: TFigure; var offset: TOffset
+);
+procedure HideGhostFigure(
+    var field: TField; var fig: TFigure; var offset: TOffset
 );
 
 implementation
@@ -195,7 +205,7 @@ begin
         exit
 end;
 
-function GetRandomFigId(): TAllFigures;
+function GetRandomFigId(): TIdFigures;
 var
     num: byte;
 begin
@@ -219,8 +229,13 @@ begin
 end;
 
 function GetRandomFigColor(): byte;
+var
+    color: byte;
 begin
-    GetRandomFigColor := AllColors[random(ColorCount) + 1];
+    repeat
+        color := AllColors[random(ColorCount) + 1]
+    until (color <> Black);
+    GetRandomFigColor := color
 end;
 
 procedure InitFigure(var fig: TFigure);
@@ -291,6 +306,16 @@ begin
     Reflectioning(fig)
 end;
 
+procedure ChangeFigureColor(var fig: TFigure; color: byte);
+var
+    fx, fy: byte;
+begin
+    for fy := 1 to fig.active.y do
+        for fx := 1 to fig.active.x do
+            if fig.all[fx, fy].exists then
+                fig.all[fx, fy].color := color
+end;
+
 function FindFigureColor(var fig: TFigure): byte;
 var
     fx, fy: byte;
@@ -325,7 +350,7 @@ begin
                 ShowBlock(x, y);
             x := x + LenBlockX
         end;
-        y := y + LenBlockY;
+        y := y + LenBlockY
     end;
     GotoXY(1, 1)
 end;
@@ -471,8 +496,8 @@ begin
 end;
 
 procedure ForceDrop(
-    var field: TField; var fig: TFigure; var offset: TOffset;
-    SaveTextAttr: integer; var stat: TStat
+    var field: TField; var fig, next_fig: TFigure; var offset: TOffset;
+    var stat: TStat
 );
 begin
     HideFigure(fig, offset);
@@ -482,14 +507,50 @@ begin
     end;
     StopFigure(field, fig);
     HideField(field, offset);
+    HideGhostFigure(field, fig, offset);
     CheckAndDelLines(field, stat);
     ShowField(field, offset);
-    InitFigure(fig);
+    HideNextFigure(stat, next_fig);
+    fig := next_fig;
+    InitFigure(next_fig);
+    ShowNextFigure(stat, next_fig);
     if InExistsBlocks(field, fig) then
     begin
-        GameOver(stat, SaveTextAttr);
+        GameOver(stat);
     end;
-    ShowFigure(fig, offset)
+    ShowFigure(fig, offset);
+    ShowGhostFigure(field, fig, offset)
+end;
+
+procedure ShowGhostFigure(
+    var field: TField; var fig: TFigure; var offset: TOffset
+);
+var
+    ghost_fig: TFigure;
+begin
+    ghost_fig := fig;
+    ChangeFigureColor(ghost_fig, Black);
+    while DownPosIsFree(field, ghost_fig) do
+    begin
+        MoveDownFigure(ghost_fig)
+    end;
+    ShowFigure(ghost_fig, offset)
+end;
+
+procedure HideGhostFigure(
+    var field: TField; var fig: TFigure; var offset: TOffset
+);
+var
+    ghost_fig: TFigure;
+begin
+    TextAttr := StandartTextAttr;
+    ghost_fig := fig;
+    ChangeFigureColor(ghost_fig, Black);
+    while DownPosIsFree(field, ghost_fig) do
+    begin
+        MoveDownFigure(ghost_fig)
+    end;
+    HideFigure(ghost_fig, offset)
 end;
 
 end.

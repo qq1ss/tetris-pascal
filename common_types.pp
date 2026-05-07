@@ -23,7 +23,7 @@ const
     MaxSpeed = 10;
 
 type
-    TAllFigures =
+    TIdFigures =
         (I, O, T, S, Z, J, L);
 
     TBlock = record
@@ -36,7 +36,7 @@ type
         x, y: byte;
     end;
     TFigure = record
-        id: TAllFigures;
+        id: TIdFigures;
         all: TFigureAll;
         active: TFigureActive;
         CurX, CurY: byte;   { UpLeft point }
@@ -64,9 +64,11 @@ var
     CenterScreenX, CenterScreenY: integer;
     MinScreenWidth, MinScreenHeight: integer;
 
+    StandartTextAttr: integer;
 implementation
 
 begin
+    StandartTextAttr := TextAttr;
     CenterScreenX := ScreenWidth div 2;
     CenterScreenY := ScreenHeight div 2;
     MinScreenWidth := (LenFieldOfBlocksX * LenBlockX) + 3 + LenFieldStatX + 2;
