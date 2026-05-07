@@ -98,7 +98,7 @@ procedure ShowStat(var stat: TStat);
 begin
     GotoXY(stat.x + length('STAT: '), stat.y);
     TextColor(Green);
-    write('STAT: ', stat.score);
+    write(stat.score);
     GotoXY(1, 1)
 end;
 
